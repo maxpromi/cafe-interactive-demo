@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coffee or Sweet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#17120e; --panel:#221a14; --ink:#f4ece2; --muted:#b9a894;
+  --crema:#d9a55b; --crema-ink:#1c140d; --line:#3a2d22; --ok:#8fc49a;
+}
+html,body{height:100%}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Rubik,"Segoe UI",Arial,sans-serif;
+  display:flex;flex-direction:column;align-items:center;padding-inline:16px;padding-block:12px;box-sizing:border-box;gap:10px}
+.stage{position:relative;width:min(100%, calc((100vh - 110px) * 9 / 16));max-width:430px;aspect-ratio:9/16;
+  border-radius:18px;overflow:hidden;background:#000;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.stage video,.stage img.poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stage video{opacity:0}
+.stage video.on{opacity:1}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;
+  padding:20px 18px 26px;background:linear-gradient(to top,rgba(16,11,7,.88) 0%,rgba(16,11,7,.35) 45%,rgba(16,11,7,0) 70%)}
+.overlay h2{margin:0;font-family:Fraunces,Georgia,serif;font-weight:600;font-size:clamp(20px,5.4vw,26px);text-wrap:balance;text-align:center}
+.overlay p{margin:0;color:var(--muted);text-align:center;font-size:14px}
+.row{display:flex;gap:10px}
+.btn{flex:1;border:0;border-radius:14px;padding:15px 10px;font:inherit;font-size:17px;font-weight:700;cursor:pointer;
+  background:var(--ink);color:var(--crema-ink);display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--crema)}
+.btn.ghost{background:rgba(244,236,226,.14);color:var(--ink);font-weight:500;font-size:15px}
+.btn:focus-visible{outline:3px solid var(--crema);outline-offset:2px}
+.btn:active{transform:scale(.98)}
+.play{width:78px;height:78px;border-radius:50%;margin:0 auto 8px;background:var(--crema);color:var(--crema-ink);
+  display:grid;place-items:center;font-size:30px;border:0;cursor:pointer}
+.toast{position:absolute;left:18px;right:18px;top:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:14px;text-align:center;font-size:15px}
+.toast b{color:var(--ok)}
+.path{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);letter-spacing:.02em}
+.path span{padding:4px 9px;border-radius:999px;border:1px solid var(--line)}
+.path span.done{border-color:var(--crema);color:var(--ink)}
+.path span.now{background:var(--crema);color:var(--crema-ink);border-color:var(--crema)}
+.path i{font-style:normal;opacity:.5}
+.note{font-size:12px;color:var(--muted);text-align:center;max-width:430px}
+@media (prefers-reduced-motion:no-preference){.overlay{animation:fade .35s ease-out}@keyframes fade{from{opacity:0}to{opacity:1}}}
+</style>
+</head>
+<body>
+
+<div class="path" dir="rtl" aria-label="מסלול הצפייה">
+  <span id="p1" class="now">כניסה</span><i>←</i>
+  <span id="p2">בחירה</span><i>←</i>
+  <span id="p3">הזמנה</span>
+</div>
+
+<div class="stage" id="stage" dir="rtl">
+  <img class="poster" id="poster" src="poster_start.jpg" alt="נקודת מבט מהדלת אל בית הקפה">
+  <video id="v_vhod" src="1_vhod.mp4" playsinline preload="auto"></video>
+  <video id="v_kofe" src="2_kofe.mp4" playsinline preload="auto"></video>
+  <video id="v_desert" src="3_desert.mp4" playsinline preload="auto"></video>
+
+  <div class="overlay" id="ovStart">
+    <button class="play" id="bStart" aria-label="התחל">▶</button>
+    <h2>היכנסו לבית הקפה</h2>
+    <p>סרטון אינטראקטיבי – אתם בוחרים מה יקרה</p>
+  </div>
+
+  <div class="overlay" id="ovChoice" hidden>
+    <h2>קפה, או משהו מתוק?</h2>
+    <div class="row">
+      <button class="btn primary" id="bKofe">☕ קפה</button>
+      <button class="btn" id="bDesert">🍰 קינוח</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="ovEnd" hidden>
+    <div class="toast" id="toast" hidden>✔ <b>ההזמנה התקבלה</b> — זו הדגמה, שום דבר לא נשלח</div>
+    <h2 id="endTitle">בתיאבון!</h2>
+    <button class="btn primary" id="bOrder">להזמנה</button>
+    <div class="row">
+      <button class="btn ghost" id="bAgain">לבחור שוב</button>
+      <button class="btn ghost" id="bRestart">מההתחלה</button>
+    </div>
+  </div>
+</div>
+
+<p class="note" dir="rtl">דמו: 3 סרטונים ב-AI מחוברים לנגן אחד עם נקודת בחירה. עובד בכל דפדפן ובטלפון, בלי מנוי לפלטפורמה.</p>
+
+<script>
+const $=id=>document.getElementById(id);
+const vids={vhod:$('v_vhod'),kofe:$('v_kofe'),desert:$('v_desert')};
+const ov={start:$('ovStart'),choice:$('ovChoice'),end:$('ovEnd')};
+let cur=null;
+function show(name){Object.entries(ov).forEach(([k,e])=>e.hidden=(k!==name));}
+function setPath(step){['p1','p2','p3'].forEach((id,i)=>{const e=$(id);e.className=i+1<step?'done':(i+1===step?'now':'');});}
+function play(key){
+  Object.values(vids).forEach(v=>{v.pause();});
+  const v=vids[key];
+  v.currentTime=0;
+  Object.entries(vids).forEach(([k,e])=>e.classList.toggle('on',k===key));
+  $('poster').hidden=true;
+  show(null);
+  cur=key;
+  v.play().catch(()=>{v.muted=true;v.play();});
+}
+vids.vhod.addEventListener('ended',()=>{setPath(2);show('choice');});
+vids.kofe.addEventListener('ended',()=>{setPath(3);$('endTitle').textContent='הקפה שלך מוכן ☕';$('toast').hidden=true;show('end');});
+vids.desert.addEventListener('ended',()=>{setPath(3);$('endTitle').textContent='הקינוח שלך מוכן 🍰';$('toast').hidden=true;show('end');});
+$('bStart').onclick=()=>{setPath(1);play('vhod');};
+$('bKofe').onclick=()=>play('kofe');
+$('bDesert').onclick=()=>play('desert');
+$('bOrder').onclick=()=>{$('toast').hidden=false;};
+$('bAgain').onclick=()=>{
+  Object.values(vids).forEach(v=>v.pause());
+  const v=vids.vhod; v.currentTime=Math.max(0,(v.duration||6)-0.05);
+  Object.entries(vids).forEach(([k,e])=>e.classList.toggle('on',k==='vhod'));
+  setPath(2);show('choice');
+};
+$('bRestart').onclick=()=>{setPath(1);play('vhod');};
+</script>
+</body>
+</html>
